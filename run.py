@@ -1,11 +1,12 @@
 import uvicorn
-from src.database.base import get_db, init_db
+
 from src.api.public_market_api import PublicMarketAPI
-from src.database.repository import TenderRepository, KeywordRepository
+from src.database.base import get_db, init_db
+from src.database.repository import KeywordRepository, TenderRepository
+from src.database.repository import KeywordRepository, TenderRepository
 from src.utils.logger import setup_logger
 
 if __name__ == "__main__":
-
     logger = setup_logger(__name__)
 
     # Initialize database
@@ -24,7 +25,4 @@ if __name__ == "__main__":
     # Initialize default keywords if needed
     keyword_repo.initialize_default_keywords()
 
-    uvicorn.run("app.main:app", 
-                host="0.0.0.0", 
-                port=8000, 
-                reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=5353, reload=True)

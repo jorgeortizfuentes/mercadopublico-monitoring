@@ -49,8 +49,3 @@ volumes:
     name: mercadopublico_app_data
   sqlite_data:
     name: mercadopublico_sqlite_data
-
-networks:
-  default:
-    name: mercadopublico_network
-    driver: bridge

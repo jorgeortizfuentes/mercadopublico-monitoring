@@ -35,6 +35,7 @@ class ExecuteRequest(BaseModel):
     
     Attributes:
         days: Number of days to look back for tenders
+        status: Status of tenders to search
     """
     days: int = Field(
         default=30,
@@ -42,11 +43,16 @@ class ExecuteRequest(BaseModel):
         le=365,
         description="Number of days to look back for tenders"
     )
+    status: str = Field(
+        default="publicada",
+        description="Status of tenders to search"
+    )
 
     model_config = ConfigDict(
         json_schema_extra = {
             "example": {
-                "days": 30
+                "days": 30,
+                "status": "publicada"
             }
         }
     )

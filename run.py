@@ -3,15 +3,15 @@ import uvicorn
 from src.api.public_market_api import PublicMarketAPI
 from src.database.base import get_db, init_db
 from src.database.repository import KeywordRepository, TenderRepository
-from src.database.repository import KeywordRepository, TenderRepository
 from src.utils.logger import setup_logger
+from init_app import initialize_application
 
 if __name__ == "__main__":
     logger = setup_logger(__name__)
 
     # Initialize database
     logger.info("Initializing database...")
-    init_db()
+    initialize_application()
 
     # Initialize API
     logger.info("Initializing API client...")

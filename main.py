@@ -4,7 +4,7 @@ from src.database.repository import TenderRepository, KeywordRepository
 from src.models.keywords import KeywordType
 from src.utils.logger import setup_logger
 from typing import List, Tuple
-
+from init_app import initialize_application
 
 def get_keywords(repo: KeywordRepository) -> Tuple[List[str], List[str]]:
     """
@@ -27,8 +27,7 @@ def main():
     
     try:
         # Initialize database
-        logger.info("Initializing database...")
-        init_db()
+        initialize_application()
 
         # Initialize API
         logger.info("Initializing API client...")
@@ -39,8 +38,6 @@ def main():
         tender_repo = TenderRepository(db)
         keyword_repo = KeywordRepository(db)
 
-        # Initialize default keywords if needed
-        keyword_repo.initialize_default_keywords()
 
         # Get keywords from database
         include_keywords, exclude_keywords = get_keywords(keyword_repo)
@@ -52,7 +49,7 @@ def main():
         tenders = api.search_tenders(
             include_keywords=include_keywords,
             exclude_keywords=exclude_keywords,
-            days_back=2
+            days_back=10
         )
 
         # Save to database

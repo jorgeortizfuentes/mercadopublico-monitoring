@@ -3,13 +3,16 @@ FROM python:3.12-slim
 
 # Argumentos de construcción
 ARG BUILD_ENV=production
+ARG WORKERS=auto
 
-# Variables de entorno para Python
+# Variables de entorno para Python y Uvicorn
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    WORKERS=${WORKERS} \
+    PORT=5353
 
 # Crear usuario no root
 RUN useradd -m -s /bin/bash app
@@ -35,7 +38,14 @@ COPY --chown=app:app . .
 USER app
 
 # Puerto de la aplicación
-EXPOSE 5353
+EXPOSE ${PORT}
 
-# Comando para ejecutar la aplicación
-CMD ["python", "run.py"]
+# Script de inicio para configurar workers
+COPY --chown=app:app docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Usar script de entrada para configurar workers
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+# docker build -t mp-monitoring .
+# docker run -p 5353:5353 mp-monitoring

@@ -138,6 +138,7 @@ async def execute_search(
             include_keywords,
             exclude_keywords,
             request.days,
+            request.status,  # Add status parameter
             tender_repo
         )
         
@@ -157,6 +158,7 @@ async def process_search(
     include_keywords: List[str],
     exclude_keywords: List[str],
     days: int,
+    status: str,  # Add status parameter
     tender_repo: TenderRepository
 ):
     """Process search in background"""
@@ -164,7 +166,8 @@ async def process_search(
         tenders = api.search_tenders(
             include_keywords=include_keywords,
             exclude_keywords=exclude_keywords,
-            days_back=days
+            days_back=days,
+            status=status  # Add status parameter
         )
         
         new_count = 0

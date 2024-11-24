@@ -9,3 +9,6 @@ uvicorn
 jinja2
 python-multipart
 aiofiles
+gunicorn
+uvloop
+httptools

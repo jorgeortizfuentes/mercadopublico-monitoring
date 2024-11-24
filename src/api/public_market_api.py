@@ -110,7 +110,7 @@ class PublicMarketAPI:
             return None
 
     def search_tenders(self, include_keywords: List[str], exclude_keywords: List[str] = None, 
-                    days_back: int = 30) -> List[Tender]:
+                    days_back: int = 30, status: str = "publicada") -> List[Tender]:
         """
         Searches for tenders containing specified keywords
         
@@ -118,10 +118,24 @@ class PublicMarketAPI:
             include_keywords: List of keywords to search for
             exclude_keywords: List of keywords to exclude (optional)
             days_back: Number of days to look back
+            status: Status of tenders to search. Options are:
+                "publicada", "cerrada", "desierta", "adjudicada", 
+                "revocada", "suspendida", "todos"
+                Default is "publicada"
             
         Returns:
             List[Tender]: List of found tenders
         """
+        # Validate status
+        valid_statuses = {
+            "publicada", "cerrada", "desierta", "adjudicada", 
+            "revocada", "suspendida", "todos"
+        }
+        
+        if status.lower() not in valid_statuses:
+            self.logger.warning(f"Invalid status '{status}'. Using default 'publicada'")
+            status = "publicada"
+        
         exclude_keywords = exclude_keywords or []
         found_tenders = []
         end_date = date.today()
@@ -130,6 +144,7 @@ class PublicMarketAPI:
         self.logger.info(f"Searching tenders from {start_date} to {end_date}")
         self.logger.info(f"Include keywords: {include_keywords}")
         self.logger.info(f"Exclude keywords: {exclude_keywords}")
+        self.logger.info(f"Status filter: {status}")
 
         current_date = start_date
         while current_date <= end_date:
@@ -138,6 +153,7 @@ class PublicMarketAPI:
                     "ticket": self.ticket,
                     "fecha": current_date.strftime("%d%m%Y"),
                     "codigo": None,
+                    "estado": None if status.lower() == "todos" else status.lower()
                 }
 
                 data = self._make_request(params)

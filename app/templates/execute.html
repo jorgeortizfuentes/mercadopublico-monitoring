@@ -8,6 +8,19 @@
         <h2 class="card-title">Ejecutar Búsqueda</h2>
         <form id="executeForm" class="mt-4">
             <div class="mb-3">
+                <label for="tenderStatus" class="form-label">Estado de Licitaciones</label>
+                <select class="form-select" id="tenderStatus" required>
+                    <option value="publicada" selected>Publicada</option>
+                    <option value="cerrada">Cerrada</option>
+                    <option value="desierta">Desierta</option>
+                    <option value="adjudicada">Adjudicada</option>
+                    <option value="revocada">Revocada</option>
+                    <option value="suspendida">Suspendida</option>
+                    <option value="todos">Todos</option>
+                </select>
+                <small class="text-muted">Estado de las licitaciones a buscar</small>
+            </div>
+            <div class="mb-3">
                 <label for="daysBack" class="form-label">Días a recorrer</label>
                 <input type="number" class="form-control" id="daysBack" 
                        value="30" min="1" max="90">
@@ -40,12 +53,13 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         const days = document.getElementById('daysBack').value;
+        const tenderStatus = document.getElementById('tenderStatus').value;
         
         try {
             // Disable button and show status
             button.disabled = true;
             status.classList.remove('d-none');
-            statusMessage.textContent = 'Iniciando búsqueda...';
+            statusMessage.textContent = 'Iniciando búsqueda. Este proceso puede tardar unos minutos...';
             
             // Make API request
             const response = await fetch('/api/execute', {
@@ -53,13 +67,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ days: parseInt(days) })
+                body: JSON.stringify({ 
+                    days: parseInt(days),
+                    status: tenderStatus
+                })
             });
             
             const data = await response.json();
             
             if (response.ok) {
-                statusMessage.textContent = 'Búsqueda en proceso. Puedes continuar navegando...';
+                statusMessage.textContent = 'Búsqueda completada. Puedes continuar navegando...';
                 
                 // Opcional: Mostrar notificación
                 if ("Notification" in window) {

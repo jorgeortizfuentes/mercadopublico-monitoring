@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile
       args:
         - BUILD_ENV=${BUILD_ENV:-production}
+        - WORKERS=${WORKERS:-auto}
     image: mercadopublico-monitor:${TAG:-latest}
     container_name: mercadopublico-monitor
     restart: unless-stopped
@@ -16,16 +17,24 @@ services:
       - DATABASE_URL=${DATABASE_URL:-sqlite:///db.sqlite3}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TZ=${TZ:-America/Santiago}
+      - WORKERS=${WORKERS:-auto}
+      - PORT=${PORT:-5353}
+      # Configuraciones de Uvicorn
+      - UVICORN_TIMEOUT=${UVICORN_TIMEOUT:-300}
+      - UVICORN_BACKLOG=${UVICORN_BACKLOG:-2048}
+      - UVICORN_LIMIT_CONCURRENCY=${UVICORN_LIMIT_CONCURRENCY:-1000}
+      - UVICORN_KEEP_ALIVE=${UVICORN_KEEP_ALIVE:-5}
     
     volumes:
       - app_data:/app/data
       - sqlite_data:/app/db
+      - ./logs:/app/logs  # Agregar volumen para logs
     
     ports:
       - "${PORT:-5353}:5353"
     
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5353/docs"]
+      test: ["CMD", "curl", "-f", "http://localhost:5353/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -34,18 +43,35 @@ services:
     security_opt:
       - no-new-privileges:true
     
-    # Limitar recursos
+    # Configuración de recursos más flexible
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 1G
+          cpus: '${CPU_LIMIT:-2}'
+          memory: ${MEMORY_LIMIT:-2G}
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '${CPU_RESERVATION:-0.5}'
+          memory: ${MEMORY_RESERVATION:-512M}
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
 
 volumes:
   app_data:
     name: mercadopublico_app_data
   sqlite_data:
     name: mercadopublico_sqlite_data
+

@@ -1,9 +1,12 @@
 ## Directory Tree
 ```
 .
+├── Dockerfile
 ├── Makefile
 ├── README.md
 ├── TO DO.md
+├── __pycache__
+│   └── init_app.cpython-312.pyc
 ├── app
 │   ├── __init__.py
 │   ├── __pycache__
@@ -30,6 +33,9 @@
 │       ├── settings.html
 │       └── tenders.html
 ├── db.sqlite3
+├── docker-compose.yaml
+├── docker-entrypoint.sh
+├── init_app.py
 ├── main.py
 ├── requirements.txt
 ├── resume_repo.py
@@ -78,25 +84,108 @@
         ├── logger.py
         └── safe_load.py
 
-21 directories, 56 files
+22 directories, 61 files
+
+```
+
+### ./docker-compose.yaml
+```text
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILD_ENV=${BUILD_ENV:-production}
+        - WORKERS=${WORKERS:-auto}
+    image: mercadopublico-monitor:${TAG:-latest}
+    container_name: mercadopublico-monitor
+    restart: unless-stopped
+    
+    environment:
+      - TICKET_KEY=${TICKET_KEY}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///db.sqlite3}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TZ=${TZ:-America/Santiago}
+      - WORKERS=${WORKERS:-auto}
+      - PORT=${PORT:-5353}
+      # Configuraciones de Uvicorn
+      - UVICORN_TIMEOUT=${UVICORN_TIMEOUT:-300}
+      - UVICORN_BACKLOG=${UVICORN_BACKLOG:-2048}
+      - UVICORN_LIMIT_CONCURRENCY=${UVICORN_LIMIT_CONCURRENCY:-1000}
+      - UVICORN_KEEP_ALIVE=${UVICORN_KEEP_ALIVE:-5}
+    
+    volumes:
+      - app_data:/app/data
+      - sqlite_data:/app/db
+      - ./logs:/app/logs  # Agregar volumen para logs
+    
+    ports:
+      - "${PORT:-5353}:5353"
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5353/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    # Configuración de recursos más flexible
+    deploy:
+      resources:
+        limits:
+          cpus: '${CPU_LIMIT:-2}'
+          memory: ${MEMORY_LIMIT:-2G}
+        reservations:
+          cpus: '${CPU_RESERVATION:-0.5}'
+          memory: ${MEMORY_RESERVATION:-512M}
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+volumes:
+  app_data:
+    name: mercadopublico_app_data
+  sqlite_data:
+    name: mercadopublico_sqlite_data
+
 
 ```
 
 ### ./run.py
 ```python
 import uvicorn
-from src.database.base import get_db, init_db
+
 from src.api.public_market_api import PublicMarketAPI
-from src.database.repository import TenderRepository, KeywordRepository
+from src.database.base import get_db, init_db
+from src.database.repository import KeywordRepository, TenderRepository
 from src.utils.logger import setup_logger
+from init_app import initialize_application
 
 if __name__ == "__main__":
-
     logger = setup_logger(__name__)
 
     # Initialize database
     logger.info("Initializing database...")
-    init_db()
+    initialize_application()
 
     # Initialize API
     logger.info("Initializing API client...")
@@ -110,16 +199,147 @@ if __name__ == "__main__":
     # Initialize default keywords if needed
     keyword_repo.initialize_default_keywords()
 
-    uvicorn.run("app.main:app", 
-                host="0.0.0.0", 
-                port=5353, 
-                reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=5353, reload=True)
 
+```
+
+### ./Dockerfile
+```text
+# Usar imagen base oficial de Python optimizada
+FROM python:3.12-slim
+
+# Argumentos de construcción
+ARG BUILD_ENV=production
+ARG WORKERS=auto
+
+# Variables de entorno para Python y Uvicorn
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    WORKERS=${WORKERS} \
+    PORT=5353
+
+# Crear usuario no root
+RUN useradd -m -s /bin/bash app
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Crear directorios necesarios
+WORKDIR /app
+RUN mkdir -p /app/data /app/db && \
+    chown -R app:app /app
+
+# Copiar requirements e instalar dependencias
+COPY --chown=app:app requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar código fuente
+COPY --chown=app:app . .
+
+# Cambiar al usuario no root
+USER app
+
+# Puerto de la aplicación
+EXPOSE ${PORT}
+
+# Script de inicio para configurar workers
+COPY --chown=app:app docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Usar script de entrada para configurar workers
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+# docker build -t mp-monitoring .
+# docker run -p 5353:5353 --name mp-monitoring mp-monitoring
 ```
 
 ### ./README.md
 ```text
 # mercadopublico-monitoring
+```
+
+### ./docker-entrypoint.sh
+```shell
+#!/bin/bash
+set -e
+
+# Calcular número de workers si es auto
+if [ "$WORKERS" = "auto" ]; then
+    WORKERS=$(( $(nproc) * 2 + 1 ))
+fi
+
+# Inicializar la aplicación
+echo "Initializing application..."
+python init_app.py
+
+# Si la inicialización fue exitosa, iniciar el servidor
+if [ $? -eq 0 ]; then
+    echo "Initialization successful, starting server..."
+    
+    # Ejecutar uvicorn con los workers calculados
+    exec uvicorn app.main:app \
+        --host 0.0.0.0 \
+        --port $PORT \
+        --workers $WORKERS \
+        --loop uvloop \
+        --http httptools \
+        --proxy-headers \
+        --forwarded-allow-ips '*' \
+        --backlog ${UVICORN_BACKLOG:-2048} \
+        --limit-concurrency ${UVICORN_LIMIT_CONCURRENCY:-1000} \
+        --timeout-keep-alive ${UVICORN_KEEP_ALIVE:-5}
+else
+    echo "Initialization failed, exiting..."
+    exit 1
+fi
+
+```
+
+### ./init_app.py
+```python
+# init_app.py
+from src.database.base import get_db, init_db
+from src.database.repository import TenderRepository, KeywordRepository
+from src.api.public_market_api import PublicMarketAPI
+from src.utils.logger import setup_logger
+
+def initialize_application():
+    """Initialize database and required components"""
+    logger = setup_logger(__name__)
+    
+    try:
+        # Initialize database
+        logger.info("Initializing database...")
+        init_db()
+
+        # Initialize API
+        logger.info("Initializing API client...")
+        api = PublicMarketAPI()
+
+        # Get database session
+        db = next(get_db())
+        tender_repo = TenderRepository(db)
+        keyword_repo = KeywordRepository(db)
+
+        # Initialize default keywords if needed
+        logger.info("Initializing default keywords...")
+        keyword_repo.initialize_default_keywords()
+
+        logger.info("Application initialization completed successfully")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error during application initialization: {str(e)}")
+        raise
+
+if __name__ == "__main__":
+    initialize_application()
+
 ```
 
 ### ./main.py
@@ -130,7 +350,7 @@ from src.database.repository import TenderRepository, KeywordRepository
 from src.models.keywords import KeywordType
 from src.utils.logger import setup_logger
 from typing import List, Tuple
-
+from init_app import initialize_application
 
 def get_keywords(repo: KeywordRepository) -> Tuple[List[str], List[str]]:
     """
@@ -153,8 +373,7 @@ def main():
     
     try:
         # Initialize database
-        logger.info("Initializing database...")
-        init_db()
+        initialize_application()
 
         # Initialize API
         logger.info("Initializing API client...")
@@ -165,8 +384,6 @@ def main():
         tender_repo = TenderRepository(db)
         keyword_repo = KeywordRepository(db)
 
-        # Initialize default keywords if needed
-        keyword_repo.initialize_default_keywords()
 
         # Get keywords from database
         include_keywords, exclude_keywords = get_keywords(keyword_repo)
@@ -178,7 +395,7 @@ def main():
         tenders = api.search_tenders(
             include_keywords=include_keywords,
             exclude_keywords=exclude_keywords,
-            days_back=2
+            days_back=10
         )
 
         # Save to database
@@ -233,6 +450,8 @@ if __name__ == "__main__":
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
+
 from app.api.routes import router as api_router
 
 app = FastAPI(title="Mercado Público Monitor")
@@ -246,33 +465,41 @@ templates = Jinja2Templates(directory="app/templates")
 # Include API routes
 app.include_router(api_router, prefix="/api")
 
+
 # Web routes
 @app.get("/")
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 @app.get("/tenders")
 async def tenders(request: Request):
     return templates.TemplateResponse("tenders.html", {"request": request})
+
 
 @app.get("/chat")
 async def chat(request: Request):
     return templates.TemplateResponse("chat.html", {"request": request})
 
+
 @app.get("/settings")
 async def settings(request: Request):
     return templates.TemplateResponse("settings.html", {"request": request})
+
 
 @app.get("/execute")
 async def execute(request: Request):
     return templates.TemplateResponse("execute.html", {"request": request})
 
+
 @app.get("/about")
 async def about(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=5353)
 
 ```
@@ -316,6 +543,7 @@ class ExecuteRequest(BaseModel):
     
     Attributes:
         days: Number of days to look back for tenders
+        status: Status of tenders to search
     """
     days: int = Field(
         default=30,
@@ -323,11 +551,16 @@ class ExecuteRequest(BaseModel):
         le=365,
         description="Number of days to look back for tenders"
     )
+    status: str = Field(
+        default="publicada",
+        description="Status of tenders to search"
+    )
 
     model_config = ConfigDict(
         json_schema_extra = {
             "example": {
-                "days": 30
+                "days": 30,
+                "status": "publicada"
             }
         }
     )
@@ -533,6 +766,7 @@ async def execute_search(
             include_keywords,
             exclude_keywords,
             request.days,
+            request.status,  # Add status parameter
             tender_repo
         )
         
@@ -552,6 +786,7 @@ async def process_search(
     include_keywords: List[str],
     exclude_keywords: List[str],
     days: int,
+    status: str,  # Add status parameter
     tender_repo: TenderRepository
 ):
     """Process search in background"""
@@ -559,7 +794,8 @@ async def process_search(
         tenders = api.search_tenders(
             include_keywords=include_keywords,
             exclude_keywords=exclude_keywords,
-            days_back=days
+            days_back=days,
+            status=status  # Add status parameter
         )
         
         new_count = 0
@@ -756,6 +992,19 @@ async def process_search(
         <h2 class="card-title">Ejecutar Búsqueda</h2>
         <form id="executeForm" class="mt-4">
             <div class="mb-3">
+                <label for="tenderStatus" class="form-label">Estado de Licitaciones</label>
+                <select class="form-select" id="tenderStatus" required>
+                    <option value="publicada" selected>Publicada</option>
+                    <option value="cerrada">Cerrada</option>
+                    <option value="desierta">Desierta</option>
+                    <option value="adjudicada">Adjudicada</option>
+                    <option value="revocada">Revocada</option>
+                    <option value="suspendida">Suspendida</option>
+                    <option value="todos">Todos</option>
+                </select>
+                <small class="text-muted">Estado de las licitaciones a buscar</small>
+            </div>
+            <div class="mb-3">
                 <label for="daysBack" class="form-label">Días a recorrer</label>
                 <input type="number" class="form-control" id="daysBack" 
                        value="30" min="1" max="90">
@@ -788,12 +1037,13 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         const days = document.getElementById('daysBack').value;
+        const tenderStatus = document.getElementById('tenderStatus').value;
         
         try {
             // Disable button and show status
             button.disabled = true;
             status.classList.remove('d-none');
-            statusMessage.textContent = 'Iniciando búsqueda...';
+            statusMessage.textContent = 'Iniciando búsqueda. Este proceso puede tardar unos minutos...';
             
             // Make API request
             const response = await fetch('/api/execute', {
@@ -801,13 +1051,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ days: parseInt(days) })
+                body: JSON.stringify({ 
+                    days: parseInt(days),
+                    status: tenderStatus
+                })
             });
             
             const data = await response.json();
             
             if (response.ok) {
-                statusMessage.textContent = 'Búsqueda en proceso. Puedes continuar navegando...';
+                statusMessage.textContent = 'Búsqueda completada. Puedes continuar navegando...';
                 
                 // Opcional: Mostrar notificación
                 if ("Notification" in window) {
@@ -2200,7 +2453,7 @@ class PublicMarketAPI:
             return None
 
     def search_tenders(self, include_keywords: List[str], exclude_keywords: List[str] = None, 
-                    days_back: int = 30) -> List[Tender]:
+                    days_back: int = 30, status: str = "publicada") -> List[Tender]:
         """
         Searches for tenders containing specified keywords
         
@@ -2208,10 +2461,24 @@ class PublicMarketAPI:
             include_keywords: List of keywords to search for
             exclude_keywords: List of keywords to exclude (optional)
             days_back: Number of days to look back
+            status: Status of tenders to search. Options are:
+                "publicada", "cerrada", "desierta", "adjudicada", 
+                "revocada", "suspendida", "todos"
+                Default is "publicada"
             
         Returns:
             List[Tender]: List of found tenders
         """
+        # Validate status
+        valid_statuses = {
+            "publicada", "cerrada", "desierta", "adjudicada", 
+            "revocada", "suspendida", "todos"
+        }
+        
+        if status.lower() not in valid_statuses:
+            self.logger.warning(f"Invalid status '{status}'. Using default 'publicada'")
+            status = "publicada"
+        
         exclude_keywords = exclude_keywords or []
         found_tenders = []
         end_date = date.today()
@@ -2220,6 +2487,7 @@ class PublicMarketAPI:
         self.logger.info(f"Searching tenders from {start_date} to {end_date}")
         self.logger.info(f"Include keywords: {include_keywords}")
         self.logger.info(f"Exclude keywords: {exclude_keywords}")
+        self.logger.info(f"Status filter: {status}")
 
         current_date = start_date
         while current_date <= end_date:
@@ -2228,6 +2496,7 @@ class PublicMarketAPI:
                     "ticket": self.ticket,
                     "fecha": current_date.strftime("%d%m%Y"),
                     "codigo": None,
+                    "estado": None if status.lower() == "todos" else status.lower()
                 }
 
                 data = self._make_request(params)
@@ -2569,4 +2838,4 @@ class PublicMarketAPI:
 
 ```
 
-Crea un archivo Docker Compose con buenas prácticas para desplegarlo en Coolify. Razona paso por paso. Las variables de entorno deben ser configurables.
+Cuando le doy a "Ejecutar" en execute quisiera que se despliegue un popup con el mensaje "Descargando licitaciones. Espera a que finalice el proceso". Quiero que este mensaje sea permanente en todas las páginas de la aplicación hasta que termine. ¿Cómo puedo hacer esto?

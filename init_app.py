@@ -1,7 +1,6 @@
 # init_app.py
 from src.database.base import get_db, init_db
-from src.database.repository import TenderRepository, KeywordRepository
-from src.api.public_market_api import PublicMarketAPI
+from src.database.repository import KeywordRepository
 from src.utils.logger import setup_logger
 
 def initialize_application():
@@ -15,11 +14,9 @@ def initialize_application():
 
         # Initialize API
         logger.info("Initializing API client...")
-        api = PublicMarketAPI()
 
         # Get database session
         db = next(get_db())
-        tender_repo = TenderRepository(db)
         keyword_repo = KeywordRepository(db)
 
         # Initialize default keywords if needed

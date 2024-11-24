@@ -1,5 +1,5 @@
 from src.api.public_market_api import PublicMarketAPI
-from src.database.base import get_db, init_db
+from src.database.base import get_db
 from src.database.repository import TenderRepository, KeywordRepository
 from src.models.keywords import KeywordType
 from src.utils.logger import setup_logger

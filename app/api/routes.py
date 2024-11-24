@@ -9,7 +9,6 @@ from src.database.repository import TenderRepository, KeywordRepository, Keyword
 from .schemas import TenderResponse, KeywordResponse, KeywordCreate, ExecuteRequest
 from src.api.public_market_api import PublicMarketAPI
 from fastapi import BackgroundTasks
-from fastapi.responses import JSONResponse
 
 # Import logger from src.utils 
 from src.utils.logger import setup_logger

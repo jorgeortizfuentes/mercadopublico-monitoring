@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
+from datetime import datetime
+from fastapi.responses import JSONResponse
 
 from app.api.routes import router as api_router
 
@@ -16,6 +17,33 @@ templates = Jinja2Templates(directory="app/templates")
 # Include API routes
 app.include_router(api_router, prefix="/api")
 
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint to verify service status
+    """
+    try:
+        health_status = {
+            "status": "ok",
+            "timestamp": datetime.now().isoformat(),
+            "service": "Mercado Público Monitor",
+            "version": "1.0.0"
+        }
+        return JSONResponse(
+            status_code=200,
+            content=health_status
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "detail": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+        )
 
 # Web routes
 @app.get("/")

@@ -36,6 +36,7 @@
 ├── docker-compose.yaml
 ├── docker-entrypoint.sh
 ├── init_app.py
+├── logs
 ├── main.py
 ├── requirements.txt
 ├── resume_repo.py
@@ -84,7 +85,7 @@
         ├── logger.py
         └── safe_load.py
 
-22 directories, 61 files
+23 directories, 61 files
 
 ```
 
@@ -255,7 +256,7 @@ RUN chmod +x /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # docker build -t mp-monitoring .
-# docker run -p 5353:5353 --name mp-monitoring mp-monitoring
+# docker run -p 5353:5353 mp-monitoring
 ```
 
 ### ./README.md
@@ -637,6 +638,7 @@ from src.database.repository import TenderRepository, KeywordRepository, Keyword
 from .schemas import TenderResponse, KeywordResponse, KeywordCreate, ExecuteRequest
 from src.api.public_market_api import PublicMarketAPI
 from fastapi import BackgroundTasks
+from fastapi.responses import JSONResponse
 
 # Import logger from src.utils 
 from src.utils.logger import setup_logger
@@ -813,6 +815,23 @@ async def process_search(
     except Exception as e:
         logger.error(f"Error in background search: {str(e)}")
 
+@router.get("/health", response_class=JSONResponse)
+async def health_check():
+    """
+    Healthcheck endpoint to verify service status
+    """
+    try:
+        # Aquí puedes añadir más validaciones, como revisar conexión a la base de datos u otros servicios externos
+        health_status = {
+            "status": "ok",
+            "timestamp": datetime.now().isoformat(),
+        }
+        return health_status
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "detail": str(e)},
+        )
 ```
 
 ### ./app/templates/index.html
@@ -962,6 +981,7 @@ async def process_search(
         {% block content %}{% endblock %}
     </main>
 
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
@@ -2838,4 +2858,7 @@ class PublicMarketAPI:
 
 ```
 
-Cuando le doy a "Ejecutar" en execute quisiera que se despliegue un popup con el mensaje "Descargando licitaciones. Espera a que finalice el proceso". Quiero que este mensaje sea permanente en todas las páginas de la aplicación hasta que termine. ¿Cómo puedo hacer esto?
+
+mercadopublico-monitor  | INFO:     Application startup complete.
+mercadopublico-monitor  | INFO:     127.0.0.1:56868 - "GET /health HTTP/1.1" 404 Not Found
+mercadopublico-monitor  | INFO:     127.0.0.1:56878 - "GET /health HTTP/1.1" 404 Not Found

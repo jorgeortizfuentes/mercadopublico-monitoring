@@ -185,21 +185,3 @@ async def process_search(
                 
     except Exception as e:
         logger.error(f"Error in background search: {str(e)}")
-
-@router.get("/health", response_class=JSONResponse)
-async def health_check():
-    """
-    Healthcheck endpoint to verify service status
-    """
-    try:
-        # Aquí puedes añadir más validaciones, como revisar conexión a la base de datos u otros servicios externos
-        health_status = {
-            "status": "ok",
-            "timestamp": datetime.now().isoformat(),
-        }
-        return health_status
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"status": "error", "detail": str(e)},
-        )

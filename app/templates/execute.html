@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Ejecutar - Mercado Público Monitor{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h2 class="card-title">Ejecutar Búsqueda</h2>
+        <form id="executeForm" class="mt-4">
+            <div class="mb-3">
+                <label for="daysBack" class="form-label">Días a recorrer</label>
+                <input type="number" class="form-control" id="daysBack" 
+                       value="30" min="1" max="90">
+                <small class="text-muted">Número de días hacia atrás para buscar licitaciones</small>
+            </div>
+            <button type="submit" class="btn btn-primary" id="executeButton">
+                Iniciar Búsqueda
+            </button>
+        </form>
+        <div id="executeStatus" class="mt-4 d-none">
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 100%"></div>
+            </div>
+            <p class="text-center mt-2" id="statusMessage">Procesando búsqueda...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('executeForm');
+    const button = document.getElementById('executeButton');
+    const status = document.getElementById('executeStatus');
+    const statusMessage = document.getElementById('statusMessage');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const days = document.getElementById('daysBack').value;
+        
+        try {
+            // Disable button and show status
+            button.disabled = true;
+            status.classList.remove('d-none');
+            statusMessage.textContent = 'Iniciando búsqueda...';
+            
+            // Make API request
+            const response = await fetch('/api/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ days: parseInt(days) })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                statusMessage.textContent = 'Búsqueda en proceso. Puedes continuar navegando...';
+                
+                // Opcional: Mostrar notificación
+                if ("Notification" in window) {
+                    Notification.requestPermission().then(function(permission) {
+                        if (permission === "granted") {
+                            new Notification("Búsqueda iniciada", {
+                                body: "La búsqueda se está ejecutando en segundo plano"
+                            });
+                        }
+                    });
+                }
+            } else {
+                throw new Error(data.detail || 'Error al ejecutar la búsqueda');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            statusMessage.textContent = `Error: ${error.message}`;
+            status.classList.add('alert', 'alert-danger');
+        } finally {
+            // Re-enable button after 3 seconds
+            setTimeout(() => {
+                button.disabled = false;
+            }, 3000);
+        }
+    });
+});
+</script>
+{% endblock %}

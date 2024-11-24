@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Licitaciones - Mercado Público Monitor{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h2 class="card-title">Licitaciones Encontradas</h2>
+        <div class="table-responsive mt-4">
+            <table id="tendersTable" class="table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Organismo</th>
+                        <th>Estado</th>
+                        <th>Monto Estimado</th>
+                        <th>Fecha Cierre</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#tendersTable').DataTable({
+        ajax: {
+            url: '/api/tenders',
+            dataSrc: ''
+        },
+        columns: [
+            { data: 'code' },
+            { data: 'name' },
+            { data: 'organization' },
+            { data: 'status' },
+            { 
+                data: 'estimated_amount',
+                render: function(data) {
+                    return data ? `$${data.toLocaleString()}` : 'No especificado';
+                }
+            },
+            { 
+                data: 'closing_date',
+                render: function(data) {
+                    return data ? new Date(data).toLocaleDateString() : 'No especificado';
+                }
+            },
+            { data: 'tender_type' }
+        ],
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+        },
+        order: [[5, 'desc']],
+        pageLength: 25,
+        dom: 'Bfrtip',
+        buttons: ['copy', 'csv', 'excel', 'pdf']
+    });
+});
+</script>
+{% endblock %}

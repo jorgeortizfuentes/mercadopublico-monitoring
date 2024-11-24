@@ -21,35 +21,6 @@ def get_keywords(repo: KeywordRepository) -> Tuple[List[str], List[str]]:
     return include_keywords, exclude_keywords
 
 
-def initialize_default_keywords(repo: KeywordRepository) -> None:
-    """
-    Initialize default keywords if the keywords table is empty
-    
-    Args:
-        repo: KeywordRepository instance
-    """
-    if not repo.get_all_keywords():
-        # Default include keywords
-        default_includes = [
-            "software", "analisis", "datos", "inteligencia artificial", "web",
-            "aplicación", "plataforma", "digital",
-            "tecnología", "informática", "computación", "desarrollo"
-        ]
-        
-        # Default exclude keywords
-        default_excludes = [
-            "limpieza", "licencia", "suscripción", "mantención", "aseo", "arriendo",
-        ]
-        
-        # Add include keywords
-        for keyword in default_includes:
-            repo.create_keyword(keyword, KeywordType.INCLUDE)
-            
-        # Add exclude keywords
-        for keyword in default_excludes:
-            repo.create_keyword(keyword, KeywordType.EXCLUDE)
-
-
 def main():
     # Setup logging
     logger = setup_logger(__name__)

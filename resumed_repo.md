@@ -28,7 +28,6 @@
 │       ├── execute.html
 │       ├── index.html
 │       ├── settings.html
-│       ├── statistics.html
 │       └── tenders.html
 ├── db.sqlite3
 ├── main.py
@@ -79,15 +78,38 @@
         ├── logger.py
         └── safe_load.py
 
-21 directories, 57 files
+21 directories, 56 files
 
 ```
 
 ### ./run.py
 ```python
 import uvicorn
+from src.database.base import get_db, init_db
+from src.api.public_market_api import PublicMarketAPI
+from src.database.repository import TenderRepository, KeywordRepository
+from src.utils.logger import setup_logger
 
 if __name__ == "__main__":
+
+    logger = setup_logger(__name__)
+
+    # Initialize database
+    logger.info("Initializing database...")
+    init_db()
+
+    # Initialize API
+    logger.info("Initializing API client...")
+    api = PublicMarketAPI()
+
+    # Get database session
+    db = next(get_db())
+    tender_repo = TenderRepository(db)
+    keyword_repo = KeywordRepository(db)
+
+    # Initialize default keywords if needed
+    keyword_repo.initialize_default_keywords()
+
     uvicorn.run("app.main:app", 
                 host="0.0.0.0", 
                 port=8000, 
@@ -123,35 +145,6 @@ def get_keywords(repo: KeywordRepository) -> Tuple[List[str], List[str]]:
     include_keywords = [k.keyword for k in repo.get_keywords_by_type(KeywordType.INCLUDE)]
     exclude_keywords = [k.keyword for k in repo.get_keywords_by_type(KeywordType.EXCLUDE)]
     return include_keywords, exclude_keywords
-
-
-def initialize_default_keywords(repo: KeywordRepository) -> None:
-    """
-    Initialize default keywords if the keywords table is empty
-    
-    Args:
-        repo: KeywordRepository instance
-    """
-    if not repo.get_all_keywords():
-        # Default include keywords
-        default_includes = [
-            "software", "analisis", "datos", "inteligencia artificial", "web",
-            "aplicación", "plataforma", "digital",
-            "tecnología", "informática", "computación", "desarrollo"
-        ]
-        
-        # Default exclude keywords
-        default_excludes = [
-            "limpieza", "licencia", "suscripción", "mantención", "aseo", "arriendo",
-        ]
-        
-        # Add include keywords
-        for keyword in default_includes:
-            repo.create_keyword(keyword, KeywordType.INCLUDE)
-            
-        # Add exclude keywords
-        for keyword in default_excludes:
-            repo.create_keyword(keyword, KeywordType.EXCLUDE)
 
 
 def main():
@@ -266,10 +259,6 @@ async def tenders(request: Request):
 async def chat(request: Request):
     return templates.TemplateResponse("chat.html", {"request": request})
 
-@app.get("/statistics")
-async def statistics(request: Request):
-    return templates.TemplateResponse("statistics.html", {"request": request})
-
 @app.get("/settings")
 async def settings(request: Request):
     return templates.TemplateResponse("settings.html", {"request": request})
@@ -371,42 +360,6 @@ class TenderResponse(BaseModel):
         }
     )
 
-class StatisticsResponse(BaseModel):
-    """
-    Schema for statistics response
-    
-    Attributes:
-        tender_types: Dictionary with counts by tender type
-        total_count: Total number of tenders
-        total_amount: Total amount of all tenders
-    """
-    tender_types: dict = Field(
-        ...,
-        description="Dictionary with counts by tender type"
-    )
-    total_count: int = Field(
-        ...,
-        description="Total number of tenders"
-    )
-    total_amount: float = Field(
-        ...,
-        description="Total amount of all tenders"
-    )
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra = {
-            "example": {
-                "tender_types": {
-                    "L1": 10,
-                    "LE": 5,
-                    "LP": 3
-                },
-                "total_count": 18,
-                "total_amount": 1500000.0
-            }
-        }
-    )
 
 class KeywordBase(BaseModel):
     """
@@ -448,9 +401,14 @@ from datetime import datetime
 
 from src.database.base import get_db
 from src.database.repository import TenderRepository, KeywordRepository, KeywordType
-from .schemas import TenderResponse, StatisticsResponse, KeywordResponse, KeywordCreate, ExecuteRequest
+from .schemas import TenderResponse, KeywordResponse, KeywordCreate, ExecuteRequest
 from src.api.public_market_api import PublicMarketAPI
 from fastapi import BackgroundTasks
+
+# Import logger from src.utils 
+from src.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 router = APIRouter()
 
@@ -484,18 +442,6 @@ async def get_tenders(
         # Convertir los objetos SQLAlchemy a diccionarios y luego a modelos Pydantic
         return [TenderResponse.model_validate(tender) for tender in tenders]
     
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/statistics", response_model=StatisticsResponse)
-async def get_statistics(db: Session = Depends(get_db)):
-    """
-    Get tender statistics
-    """
-    try:
-        repo = TenderRepository(db)
-        return repo.get_tender_statistics()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -763,9 +709,6 @@ async def process_search(
                         <a class="nav-link" href="/chat">Chat</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/statistics">Estadísticas</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="/settings">Configuración</a>
                     </li>
                     <li class="nav-item">
@@ -897,80 +840,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ```
 
-### ./app/templates/statistics.html
-```text
-{% extends "base.html" %}
-
-{% block title %}Estadísticas - Mercado Público Monitor{% endblock %}
-
-{% block content %}
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Licitaciones por Tipo</h3>
-                <canvas id="tenderTypeChart"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Montos por Tipo</h3>
-                <canvas id="amountTypeChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-$(document).ready(function() {
-    fetch('/api/statistics')
-        .then(response => response.json())
-        .then(data => {
-            // Gráfico de tipos de licitación
-            new Chart(document.getElementById('tenderTypeChart'), {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(data.tender_types),
-                    datasets: [{
-                        data: Object.values(data.tender_types),
-                        backgroundColor: [
-                            '#0d6efd', '#6610f2', '#6f42c1', '#d63384',
-                            '#dc3545', '#fd7e14', '#ffc107', '#198754'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#f8f9fa'
-                            }
-                        }
-                    }
-                }
-            });
-        });
-});
-</script>
-{% endblock %}
-
-```
-
 ### ./app/templates/settings.html
 ```text
 <!-- app/templates/settings.html -->
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Keywords Settings</h2>
-    
+<div class="card">
+    <div class="card-header">
+        Keywords Settings
+    </div>
+        
     <!-- Add new keyword form -->
     <div class="card mb-4">
         <div class="card-body">
@@ -1240,7 +1120,7 @@ $(document).ready(function() {
             url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
         },
         order: [[5, 'desc']],
-        pageLength: 25,
+        pageLength: 200,
         dom: 'Bfrtip',
         buttons: ['copy', 'csv', 'excel', 'pdf']
     });
@@ -1468,49 +1348,6 @@ class TenderRepository:
             self.logger.error(f"Error getting filtered tenders: {str(e)}")
             raise
 
-    def get_tender_statistics(self) -> Dict:
-        """
-        Get statistics about tenders
-        
-        Returns:
-            Dict: Dictionary containing various statistics
-        """
-        try:
-            total_count = self.db.query(func.count(Tender.code)).scalar()
-            total_amount = self.db.query(func.sum(Tender.estimated_amount)).scalar() or 0
-
-            # Get counts by tender type
-            type_counts = (
-                self.db.query(
-                    Tender.tender_type,
-                    func.count(Tender.code).label('count')
-                )
-                .group_by(Tender.tender_type)
-                .all()
-            )
-
-            # Get counts by status
-            status_counts = (
-                self.db.query(
-                    Tender.status,
-                    func.count(Tender.code).label('count')
-                )
-                .group_by(Tender.status)
-                .all()
-            )
-
-            return {
-                "total_count": total_count,
-                "total_amount": float(total_amount),
-                "by_type": {str(t.tender_type): t.count for t in type_counts if t.tender_type},
-                "by_status": {s.status: s.count for s in status_counts if s.status}
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error getting tender statistics: {str(e)}")
-            raise
-
-
 class KeywordRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -1624,7 +1461,7 @@ class KeywordRepository:
             
             # Default exclude keywords
             default_excludes = [
-                "limpieza", "licencia", "suscripción", "mantención", "aseo", "arriendo",
+                "limpieza", "licencia", "suscripción", "mantención", "aseo", "arriendo", "equipos", "equipamiento", "exámenes", "insumos", "antenas", "datos de internet",
             ]
             
             try:
@@ -1736,7 +1573,9 @@ def get_db():
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# If .env file exists, load environment variables from it
+if os.path.exists('.env'):
+    load_dotenv()
 
 # API Configuration
 API_BASE_URL = "https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json"
@@ -2730,4 +2569,4 @@ class PublicMarketAPI:
 
 ```
 
-Si ejecuto execute entonces no me carga el resto de la página. ¿Me falta hacer que funcione de forma asincronica?
+Crea un archivo Docker Compose con buenas prácticas para desplegarlo en Coolify. Razona paso por paso. Las variables de entorno deben ser configurables.

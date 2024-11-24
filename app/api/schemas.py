@@ -79,42 +79,6 @@ class TenderResponse(BaseModel):
         }
     )
 
-class StatisticsResponse(BaseModel):
-    """
-    Schema for statistics response
-    
-    Attributes:
-        tender_types: Dictionary with counts by tender type
-        total_count: Total number of tenders
-        total_amount: Total amount of all tenders
-    """
-    tender_types: dict = Field(
-        ...,
-        description="Dictionary with counts by tender type"
-    )
-    total_count: int = Field(
-        ...,
-        description="Total number of tenders"
-    )
-    total_amount: float = Field(
-        ...,
-        description="Total amount of all tenders"
-    )
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra = {
-            "example": {
-                "tender_types": {
-                    "L1": 10,
-                    "LE": 5,
-                    "LP": 3
-                },
-                "total_count": 18,
-                "total_amount": 1500000.0
-            }
-        }
-    )
 
 class KeywordBase(BaseModel):
     """

@@ -1,7 +1,9 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# If .env file exists, load environment variables from it
+if os.path.exists('.env'):
+    load_dotenv()
 
 # API Configuration
 API_BASE_URL = "https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json"

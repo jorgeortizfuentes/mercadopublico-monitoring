@@ -27,10 +27,6 @@ async def tenders(request: Request):
 async def chat(request: Request):
     return templates.TemplateResponse("chat.html", {"request": request})
 
-@app.get("/statistics")
-async def statistics(request: Request):
-    return templates.TemplateResponse("statistics.html", {"request": request})
-
 @app.get("/settings")
 async def settings(request: Request):
     return templates.TemplateResponse("settings.html", {"request": request})

@@ -185,49 +185,6 @@ class TenderRepository:
             self.logger.error(f"Error getting filtered tenders: {str(e)}")
             raise
 
-    def get_tender_statistics(self) -> Dict:
-        """
-        Get statistics about tenders
-        
-        Returns:
-            Dict: Dictionary containing various statistics
-        """
-        try:
-            total_count = self.db.query(func.count(Tender.code)).scalar()
-            total_amount = self.db.query(func.sum(Tender.estimated_amount)).scalar() or 0
-
-            # Get counts by tender type
-            type_counts = (
-                self.db.query(
-                    Tender.tender_type,
-                    func.count(Tender.code).label('count')
-                )
-                .group_by(Tender.tender_type)
-                .all()
-            )
-
-            # Get counts by status
-            status_counts = (
-                self.db.query(
-                    Tender.status,
-                    func.count(Tender.code).label('count')
-                )
-                .group_by(Tender.status)
-                .all()
-            )
-
-            return {
-                "total_count": total_count,
-                "total_amount": float(total_amount),
-                "by_type": {str(t.tender_type): t.count for t in type_counts if t.tender_type},
-                "by_status": {s.status: s.count for s in status_counts if s.status}
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error getting tender statistics: {str(e)}")
-            raise
-
-
 class KeywordRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -341,7 +298,7 @@ class KeywordRepository:
             
             # Default exclude keywords
             default_excludes = [
-                "limpieza", "licencia", "suscripción", "mantención", "aseo", "arriendo",
+                "limpieza", "licencia", "suscripción", "mantención", "aseo", "arriendo", "equipos", "equipamiento", "exámenes", "insumos", "antenas", "datos de internet",
             ]
             
             try:

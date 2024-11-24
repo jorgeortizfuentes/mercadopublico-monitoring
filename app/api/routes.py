@@ -6,7 +6,7 @@ from datetime import datetime
 
 from src.database.base import get_db
 from src.database.repository import TenderRepository, KeywordRepository, KeywordType
-from .schemas import TenderResponse, StatisticsResponse, KeywordResponse, KeywordCreate, ExecuteRequest
+from .schemas import TenderResponse, KeywordResponse, KeywordCreate, ExecuteRequest
 from src.api.public_market_api import PublicMarketAPI
 from fastapi import BackgroundTasks
 
@@ -47,18 +47,6 @@ async def get_tenders(
         # Convertir los objetos SQLAlchemy a diccionarios y luego a modelos Pydantic
         return [TenderResponse.model_validate(tender) for tender in tenders]
     
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/statistics", response_model=StatisticsResponse)
-async def get_statistics(db: Session = Depends(get_db)):
-    """
-    Get tender statistics
-    """
-    try:
-        repo = TenderRepository(db)
-        return repo.get_tender_statistics()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

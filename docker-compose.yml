@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILD_ENV=${BUILD_ENV:-production}
+    image: mercadopublico-monitor:${TAG:-latest}
+    container_name: mercadopublico-monitor
+    restart: unless-stopped
+    
+    environment:
+      - TICKET_KEY=${TICKET_KEY}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///db.sqlite3}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TZ=${TZ:-America/Santiago}
+    
+    volumes:
+      - app_data:/app/data
+      - sqlite_data:/app/db
+    
+    ports:
+      - "${PORT:-8000}:8000"
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    # Limitar recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  app_data:
+    name: mercadopublico_app_data
+  sqlite_data:
+    name: mercadopublico_sqlite_data
+
+networks:
+  default:
+    name: mercadopublico_network
+    driver: bridge

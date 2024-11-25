@@ -1,28 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}Licitaciones - Mercado Público Monitor{% endblock %}
+{% block title %}Licitaciones - MP Monitor{% endblock %}
+{% block header %}Licitaciones{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-body">
-        <h2 class="card-title">Licitaciones Encontradas</h2>
-        <div class="table-responsive mt-4">
-            <table id="tendersTable" class="table table-dark table-striped">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Nombre</th>
-                        <th>Organismo</th>
-                        <th>Estado</th>
-                        <th>Monto Estimado</th>
-                        <th>Fecha Cierre</th>
-                        <th>Tipo</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+<div class="table-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>Lista de Licitaciones</h3>
+            <p class="text-muted">Gestiona y monitorea todas las licitaciones</p>
         </div>
+        <div>
+            <button class="btn btn-primary">
+                <i class='bx bx-export'></i> Exportar
+            </button>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table id="tendersTable" class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Organismo</th>
+                    <th>Estado</th>
+                    <th>Monto Estimado</th>
+                    <th>Fecha Cierre</th>
+                    <th>Tipo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
@@ -39,7 +50,18 @@ $(document).ready(function() {
             { data: 'code' },
             { data: 'name' },
             { data: 'organization' },
-            { data: 'status' },
+            { 
+                data: 'status',
+                render: function(data) {
+                    const statusClasses = {
+                        'publicada': 'success',
+                        'cerrada': 'danger',
+                        'adjudicada': 'primary',
+                        'desierta': 'warning'
+                    };
+                    return `<span class="badge bg-${statusClasses[data] || 'secondary'}">${data}</span>`;
+                }
+            },
             { 
                 data: 'estimated_amount',
                 render: function(data) {
@@ -52,15 +74,28 @@ $(document).ready(function() {
                     return data ? new Date(data).toLocaleDateString() : 'No especificado';
                 }
             },
-            { data: 'tender_type' }
+            { data: 'tender_type' },
+            {
+                data: null,
+                render: function(data) {
+                    return `
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class='bx bx-show'></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class='bx bx-star'></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            }
         ],
         language: {
             url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
         },
         order: [[5, 'desc']],
-        pageLength: 200,
-        dom: 'Bfrtip',
-        buttons: ['copy', 'csv', 'excel', 'pdf']
+        pageLength: 10
     });
 });
 </script>

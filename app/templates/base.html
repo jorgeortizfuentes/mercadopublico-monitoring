@@ -3,62 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Mercado Público Monitor{% endblock %}</title>
-
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">    
-    <!-- Bootstrap CSS -->
+    <title>{% block title %}MP Monitor{% endblock %}</title>
+    
+    <!-- CSS Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- DataTables CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
     <link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">
 </head>
-<body class="bg-dark text-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">MP Monitor</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/tenders">Licitaciones</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/chat">Chat</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/settings">Configuración</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/execute">Ejecutar</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/about">Acerca de</a>
-                    </li>
-                </ul>
-            </div>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i class='bx bx-store'></i>
+            MP Monitor
+        </div>
+        <div class="nav flex-column">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                <i class='bx bxs-dashboard'></i>
+                Dashboard
+            </a>
+            <a href="/tenders" class="nav-link {% if request.path == '/tenders' %}active{% endif %}">
+                <i class='bx bx-list-ul'></i>
+                Licitaciones
+            </a>
+            <a href="/chat" class="nav-link {% if request.path == '/chat' %}active{% endif %}">
+                <i class='bx bx-chat'></i>
+                Asistente virtual
+            </a>
+            <a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">
+                <i class='bx bx-cog'></i>
+                Configuración
+            </a>
+            <a href="/execute" class="nav-link {% if request.path == '/execute' %}active{% endif %}">
+                <i class='bx bx-play-circle'></i>
+                Ejecutar
+            </a>
+            <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">
+                <i class='bx bx-info-circle'></i>
+                Acerca de
+            </a>
         </div>
     </nav>
 
-    <main class="container mt-4">
-        {% block content %}{% endblock %}
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">{% block header %}{% endblock %}</h1>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-light">
+                        <i class='bx bx-bell'></i>
+                    </button>
+                    <button class="btn btn-light">
+                        <i class='bx bx-user-circle'></i>
+                    </button>
+                </div>
+            </div>
+
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
-    
-    <!-- Bootstrap JS -->
+    <!-- JavaScript Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- DataTables -->
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Custom JS -->
     <script src="{{ url_for('static', path='/js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>

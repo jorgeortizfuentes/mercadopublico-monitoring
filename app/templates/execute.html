@@ -1,41 +1,64 @@
 {% extends "base.html" %}
 
-{% block title %}Ejecutar - Mercado Público Monitor{% endblock %}
+{% block title %}Ejecutar - MP Monitor{% endblock %}
+{% block header %}Ejecutar Búsqueda{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-body">
-        <h2 class="card-title">Ejecutar Búsqueda</h2>
-        <form id="executeForm" class="mt-4">
-            <div class="mb-3">
-                <label for="tenderStatus" class="form-label">Estado de Licitaciones</label>
-                <select class="form-select" id="tenderStatus" required>
-                    <option value="publicada" selected>Publicada</option>
-                    <option value="cerrada">Cerrada</option>
-                    <option value="desierta">Desierta</option>
-                    <option value="adjudicada">Adjudicada</option>
-                    <option value="revocada">Revocada</option>
-                    <option value="suspendida">Suspendida</option>
-                    <option value="todos">Todos</option>
-                </select>
-                <small class="text-muted">Estado de las licitaciones a buscar</small>
+<div class="row">
+    <div class="col-md-8">
+        <div class="form-container">
+            <h5 class="mb-4">Configuración de Búsqueda</h5>
+            <form id="executeForm">
+                <div class="mb-4">
+                    <label class="form-label">Estado de Licitaciones</label>
+                    <select class="form-select" id="tenderStatus" required>
+                        <option value="publicada" selected>Publicada</option>
+                        <option value="cerrada">Cerrada</option>
+                        <option value="desierta">Desierta</option>
+                        <option value="adjudicada">Adjudicada</option>
+                        <option value="revocada">Revocada</option>
+                        <option value="suspendida">Suspendida</option>
+                        <option value="todos">Todos</option>
+                    </select>
+                    <small class="text-muted">Selecciona el estado de las licitaciones a buscar</small>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label">Días a recorrer</label>
+                    <input type="number" class="form-control" id="daysBack" 
+                           value="30" min="1" max="90">
+                    <small class="text-muted">Número de días hacia atrás para la búsqueda</small>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary" id="executeButton">
+                        <i class='bx bx-play-circle me-2'></i>Iniciar Búsqueda
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stats-card mb-4">
+            <h3>Última Ejecución</h3>
+            <div class="number" style="font-size: 1.2rem;">10:30 AM</div>
+            <div class="text-muted">
+                <small><i class='bx bx-time'></i> 15 Nov 2023</small>
             </div>
-            <div class="mb-3">
-                <label for="daysBack" class="form-label">Días a recorrer</label>
-                <input type="number" class="form-control" id="daysBack" 
-                       value="30" min="1" max="90">
-                <small class="text-muted">Número de días hacia atrás para buscar licitaciones</small>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Estado del Proceso</h5>
+                <div id="executeStatus" class="d-none mt-3">
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <p class="text-center mb-0" id="statusMessage">Procesando búsqueda...</p>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary" id="executeButton">
-                Iniciar Búsqueda
-            </button>
-        </form>
-        <div id="executeStatus" class="mt-4 d-none">
-            <div class="progress">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                     role="progressbar" style="width: 100%"></div>
-            </div>
-            <p class="text-center mt-2" id="statusMessage">Procesando búsqueda...</p>
         </div>
     </div>
 </div>
@@ -56,12 +79,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const tenderStatus = document.getElementById('tenderStatus').value;
         
         try {
-            // Disable button and show status
             button.disabled = true;
             status.classList.remove('d-none');
-            statusMessage.textContent = 'Iniciando búsqueda. Este proceso puede tardar unos minutos...';
+            statusMessage.textContent = 'Iniciando búsqueda...';
             
-            // Make API request
             const response = await fetch('/api/execute', {
                 method: 'POST',
                 headers: {
@@ -76,18 +97,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (response.ok) {
-                statusMessage.textContent = 'Búsqueda completada. Puedes continuar navegando...';
-                
-                // Opcional: Mostrar notificación
-                if ("Notification" in window) {
-                    Notification.requestPermission().then(function(permission) {
-                        if (permission === "granted") {
-                            new Notification("Búsqueda iniciada", {
-                                body: "La búsqueda se está ejecutando en segundo plano"
-                            });
-                        }
-                    });
-                }
+                showNotification('Búsqueda iniciada correctamente', 'success');
+                statusMessage.textContent = 'Búsqueda completada exitosamente';
             } else {
                 throw new Error(data.detail || 'Error al ejecutar la búsqueda');
             }
@@ -95,9 +106,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error:', error);
             statusMessage.textContent = `Error: ${error.message}`;
-            status.classList.add('alert', 'alert-danger');
+            showNotification(error.message, 'error');
         } finally {
-            // Re-enable button after 3 seconds
             setTimeout(() => {
                 button.disabled = false;
             }, 3000);

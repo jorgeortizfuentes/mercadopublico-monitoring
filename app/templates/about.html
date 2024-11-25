@@ -1,40 +1,108 @@
 {% extends "base.html" %}
 
-{% block title %}Acerca de - Mercado Público Monitor{% endblock %}
+{% block title %}Acerca de - MP Monitor{% endblock %}
+{% block header %}Acerca de MP Monitor{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-body">
-        <h2 class="card-title">Acerca de Mercado Público Monitor</h2>
-        <div class="mt-4">
-            <h4>Descripción</h4>
-            <p>
-                Mercado Público Monitor es una herramienta diseñada para facilitar el seguimiento
-                de licitaciones públicas en Chile. Permite la búsqueda automatizada y el análisis
-                de oportunidades de negocio en el mercado público.
-            </p>
-            
-            <h4 class="mt-4">Características</h4>
-            <ul>
-                <li>Búsqueda automatizada de licitaciones</li>
-                <li>Filtrado por palabras clave</li>
-                <li>Análisis estadístico</li>
-                <li>Interfaz intuitiva</li>
-                <li>Exportación de datos</li>
-            </ul>
-            
-            <h4 class="mt-4">Tecnologías</h4>
-            <ul>
-                <li>Backend: Python, FastAPI, SQLAlchemy</li>
-                <li>Frontend: HTML5, Bootstrap 5, JavaScript</li>
-                <li>Base de datos: SQLite</li>
-            </ul>
-            
-            <h4 class="mt-4">Autor</h4>
-            <p>
-                Desarrollado por Jorge Ortiz Fuentes<br>
-                Fecha: Nov 2024
-            </p>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Descripción General</h5>
+                <p class="card-text">
+                    MP Monitor es una herramienta diseñada para facilitar el seguimiento
+                    de licitaciones públicas en Chile. Permite la búsqueda automatizada y el análisis
+                    de oportunidades de negocio en el mercado público.
+                </p>
+                
+                <h5 class="card-title mt-4 mb-3">Características Principales</h5>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class='bx bx-search fs-4 text-primary me-3'></i>
+                            <div>
+                                <h6 class="mb-1">Búsqueda Automatizada</h6>
+                                <p class="text-muted mb-0">Monitoreo continuo de licitaciones</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class='bx bx-filter fs-4 text-success me-3'></i>
+                            <div>
+                                <h6 class="mb-1">Filtrado Inteligente</h6>
+                                <p class="text-muted mb-0">Keywords personalizables</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class='bx bx-stats fs-4 text-info me-3'></i>
+                            <div>
+                                <h6 class="mb-1">Análisis Estadístico</h6>
+                                <p class="text-muted mb-0">Visualización de datos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class='bx bx-export fs-4 text-warning me-3'></i>
+                            <div>
+                                <h6 class="mb-1">Exportación</h6>
+                                <p class="text-muted mb-0">Múltiples formatos disponibles</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="card-title mt-4 mb-3">Tecnologías Utilizadas</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class='bx bx-check text-primary me-2'></i>Python</li>
+                            <li class="mb-2"><i class='bx bx-check text-primary me-2'></i>FastAPI</li>
+                            <li class="mb-2"><i class='bx bx-check text-primary me-2'></i>SQLAlchemy</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class='bx bx-check text-primary me-2'></i>HTML5</li>
+                            <li class="mb-2"><i class='bx bx-check text-primary me-2'></i>Bootstrap 5</li>
+                            <li class="mb-2"><i class='bx bx-check text-primary me-2'></i>JavaScript</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Versión</h5>
+                <p class="card-text">
+                    <strong>Versión actual:</strong> 1.0.0<br>
+                    <strong>Última actualización:</strong> Nov 2023<br>
+                    <strong>Estado:</strong> <span class="badge bg-success">Estable</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Contacto</h5>
+                <p class="card-text">
+                    Para soporte o consultas, contáctanos:
+                </p>
+                <div class="d-grid gap-2">
+                    <a href="mailto:support@mpmonitor.cl" class="btn btn-outline-primary">
+                        <i class='bx bx-envelope me-2'></i>Email
+                    </a>
+                    <a href="#" class="btn btn-outline-info">
+                        <i class='bx bxl-github me-2'></i>GitHub
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -1,4 +1,4 @@
-// Función para formatear números como moneda
+// Utility Functions
 function formatCurrency(amount) {
     return new Intl.NumberFormat('es-CL', {
         style: 'currency',
@@ -6,37 +6,71 @@ function formatCurrency(amount) {
     }).format(amount);
 }
 
-// Función para formatear fechas
 function formatDate(dateString) {
     if (!dateString) return 'No especificado';
     return new Date(dateString).toLocaleDateString('es-CL');
 }
 
-// Función para mostrar notificaciones
+// Notifications
 function showNotification(message, type = 'success') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.role = 'alert';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
     `;
     
-    document.querySelector('main').insertAdjacentElement('afterbegin', alertDiv);
+    const container = document.createElement('div');
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.appendChild(toast);
+    document.body.appendChild(container);
     
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => {
+        container.remove();
+    });
 }
 
-// Configurar tema oscuro para DataTables
+// DataTables Configuration
 $.extend(true, $.fn.dataTable.defaults, {
-    "theme": 'dark',
-    "processing": true,
-    "serverSide": false,
-    "searching": true,
-    "ordering": true,
-    "language": {
-        "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json"
-    }
+    language: {
+        url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+    },
+    dom: '<"d-flex justify-content-between align-items-center mb-4"Bf>rtip',
+    buttons: [
+        {
+            extend: 'collection',
+            text: '<i class="bx bx-export me-1"></i>Exportar',
+            buttons: ['copy', 'csv', 'excel', 'pdf']
+        }
+    ],
+    pageLength: 10,
+    responsive: true,
+    processing: true,
+    stateSave: true
+});
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Initialize popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
 });

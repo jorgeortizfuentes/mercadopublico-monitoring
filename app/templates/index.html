@@ -1,39 +1,71 @@
 {% extends "base.html" %}
 
-{% block title %}Inicio - Mercado Público Monitor{% endblock %}
+{% block title %}Dashboard - MP Monitor{% endblock %}
+{% block header %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="card">
+
+<!-- Features Cards -->
+<div class="row mt-4 g-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class='bx bx-search fs-1 text-primary'></i>
+                    <h5 class="card-title mb-0 ms-3">Búsqueda Inteligente</h5>
+                </div>
+                <p class="card-text">Configura palabras clave para encontrar las licitaciones relevantes para tu negocio.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class='bx bx-time-five fs-1 text-success'></i>
+                    <h5 class="card-title mb-0 ms-3">Monitoreo Continuo</h5>
+                </div>
+                <p class="card-text">Mantente al día con las últimas oportunidades del mercado público.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class='bx bx-bar-chart-alt-2 fs-1 text-warning'></i>
+                    <h5 class="card-title mb-0 ms-3">Análisis Detallado</h5>
+                </div>
+                <p class="card-text">Visualiza estadísticas y tendencias para tomar mejores decisiones.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mt-4">
     <div class="card-body">
-        <h1 class="card-title">Bienvenido a Mercado Público Monitor</h1>
-        <p class="card-text">
-            Esta aplicación te permite monitorear las licitaciones públicas de Chile que coincidan
-            con tus criterios de búsqueda.
-        </p>
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Búsqueda Inteligente</h5>
-                        <p class="card-text">Configura palabras clave para encontrar las licitaciones relevantes para tu negocio.</p>
-                    </div>
-                </div>
+        <h5 class="card-title mb-4">Acciones Rápidas</h5>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <a href="/execute" class="btn btn-light w-100 text-start">
+                    <i class='bx bx-play-circle me-2'></i> Ejecutar Búsqueda
+                </a>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Monitoreo Continuo</h5>
-                        <p class="card-text">Mantente al día con las últimas oportunidades del mercado público.</p>
-                    </div>
-                </div>
+            <div class="col-md-3">
+                <a href="/settings" class="btn btn-light w-100 text-start">
+                    <i class='bx bx-cog me-2'></i> Configurar Keywords
+                </a>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Análisis Detallado</h5>
-                        <p class="card-text">Visualiza estadísticas y tendencias para tomar mejores decisiones.</p>
-                    </div>
-                </div>
+            <div class="col-md-3">
+                <a href="/tenders" class="btn btn-light w-100 text-start">
+                    <i class='bx bx-list-ul me-2'></i> Ver Licitaciones
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/chat" class="btn btn-light w-100 text-start">
+                    <i class='bx bx-chat me-2'></i> Asistente Virtual
+                </a>
             </div>
         </div>
     </div>

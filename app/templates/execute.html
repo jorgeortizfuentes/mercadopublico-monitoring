@@ -42,9 +42,9 @@
     <div class="col-md-4">
         <div class="stats-card mb-4">
             <h3>Última Ejecución</h3>
-            <div class="number" style="font-size: 1.2rem;">10:30 AM</div>
+            <div class="number" style="font-size: 1.2rem;" id="lastExecutionTime">8:00 AM</div>
             <div class="text-muted">
-                <small><i class='bx bx-time'></i> 15 Nov 2023</small>
+                <small><i class='bx bx-time'></i> <span id="lastExecutionDate"></span></small>
             </div>
         </div>
         
@@ -56,7 +56,7 @@
                         <div class="progress-bar progress-bar-striped progress-bar-animated" 
                              role="progressbar" style="width: 100%"></div>
                     </div>
-                    <p class="text-center mb-0" id="statusMessage">Procesando búsqueda...</p>
+                    <p class="text-center mb-0" id="statusMessage">Actualizado</p>
                 </div>
             </div>
         </div>
@@ -71,6 +71,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const button = document.getElementById('executeButton');
     const status = document.getElementById('executeStatus');
     const statusMessage = document.getElementById('statusMessage');
+
+    // Función para actualizar la última ejecución
+    function updateLastExecution() {
+        const now = new Date();
+        const santiagoTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+        const today8AM = new Date(santiagoTime);
+        today8AM.setHours(8, 0, 0, 0);
+
+        let executionDate;
+        if (santiagoTime >= today8AM) {
+            executionDate = today8AM;
+        } else {
+            executionDate = new Date(today8AM);
+            executionDate.setDate(executionDate.getDate() - 1);
+        }
+
+        document.getElementById('lastExecutionDate').textContent = executionDate.toLocaleDateString('es-CL', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+
+    // Llamar a la función cuando se carga la página
+    updateLastExecution();
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();

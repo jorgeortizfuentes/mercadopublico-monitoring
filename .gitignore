@@ -164,3 +164,4 @@ cython_debug/
 # Resumed repository
 resume_repo.py
 resumed_repo.md
+.aider*

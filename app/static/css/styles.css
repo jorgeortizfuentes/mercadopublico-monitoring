@@ -88,6 +88,14 @@ body {
     padding: 2rem;
 }
 
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 2rem;
+        padding-top: 4rem; /* Espacio adicional para el botón de menú */
+    }
+}
+
 /* Cards */
 .stats-card {
     background: white;

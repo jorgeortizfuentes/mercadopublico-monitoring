@@ -23,6 +23,38 @@ body {
     border-right: 1px solid var(--border-color);
     padding: 1rem;
     transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0 !important;
+    }
+}
+
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: block;
+    }
 }
 
 .sidebar .logo {
@@ -54,6 +86,14 @@ body {
 .main-content {
     margin-left: 240px;
     padding: 2rem;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 2rem;
+        padding-top: 4rem; /* Espacio adicional para el botón de menú */
+    }
 }
 
 /* Cards */
